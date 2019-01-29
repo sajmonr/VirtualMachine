@@ -19,8 +19,6 @@ public class OsDriver {
             System.out.println(i + " : " + NumberUtils.isPowerOfTwo(i));
 
         int x = 0xffffffff;
-        int y = 1;
-        int a = 3;
         System.out.println(x);
     }
 
