@@ -20,6 +20,7 @@ public class OsDriver {
 
         int x = 0xffffffff;
         int y = 1;
+        int a = 3;
         System.out.println(x);
     }
 
