@@ -41,8 +41,6 @@ public class LongTermScheduler implements Scheduler {
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
-
-
     }
 
     private void loadToPrimaryMemory(int[] pageTable, byte[] job) throws MemoryOverflowException {
