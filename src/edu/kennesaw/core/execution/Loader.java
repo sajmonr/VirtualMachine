@@ -1,8 +1,12 @@
 package edu.kennesaw.core.execution;
 
 import edu.kennesaw.core.converters.Hexadecimal;
+import edu.kennesaw.core.memory.Memory;
+import edu.kennesaw.core.memory.MemoryOverflowException;
 import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
+import edu.kennesaw.core.utils.BitUtils;
+import edu.kennesaw.core.utils.Config;
 
 import java.io.*;
 
@@ -22,7 +26,7 @@ public class Loader {
         _jobQueue = jobQueue;
     }
 
-    public void loadJobs() throws FileNotFoundException, IOException{
+    public void loadJobs(Memory memory) throws FileNotFoundException, IOException, MemoryOverflowException {
         BufferedReader reader = new BufferedReader(new FileReader(_programFile));
         int currentAddress = 0;
         String line;
@@ -35,10 +39,19 @@ public class Loader {
 
                 while(!isEnd(line = reader.readLine())){
                     if(isInstruction(line)){
+                        int instruction = parseInstruction(line);
 
+                        memory.write(currentAddress, BitUtils.getBytes(instruction));
+                        currentAddress += Config.WORD_SIZE;
+                    }else if(isDataControlCard(line)){
+                        int[] controlCard = parseControlCard(line);
+
+                        pcb.inputBufferSize = controlCard[0];
+                        pcb.outputBufferSize = controlCard[1];
+                        pcb.temporaryBufferSize = controlCard[2];
                     }
                 }
-
+                _jobQueue.add(pcb);
             }
         }
 
@@ -66,6 +79,10 @@ public class Loader {
     private boolean isEnd(String line){
         return line.toLowerCase().contains(CARD_HEADERS[2]);
     }
+    private int parseInstruction(String line){
+        return Hexadecimal.toInt(line);
+    }
+
     /* Job control card structure:
      * [0] => job id
      * [1] => text size (words)
@@ -78,6 +95,8 @@ public class Loader {
     private int[] parseControlCard(String line){
         int[] controlCard = new int[3];
         int currentCardIndex = 0;
+
+        line = line.replaceFirst("//", "");
 
         for(String component : line.split(" ")){
             if(!component.isEmpty() && !isControlHeader(component))

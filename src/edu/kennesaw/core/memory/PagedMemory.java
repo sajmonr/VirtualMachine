@@ -27,8 +27,8 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory {
     public int[] allocate(int size) throws MemoryAllocationException{
         //Calculate frames needed. If it is not evenly divisible
         //then take the next higher number of frames.
-        int framesNeeded = getCapacity() / _pageSize;
-        if(getCapacity() % _pageSize != 0)
+        int framesNeeded = size / _pageSize;
+        if(size % _pageSize != 0)
             framesNeeded++;
 
         if(framesNeeded > _framesAvailable)
@@ -41,6 +41,7 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory {
             if (!_pageFile[frameCounter].dirty) {
                 _pageFile[frameCounter].dirty = true;
                 framesAllocated[framesAllocated.length - framesNeeded] = frameCounter;
+                framesNeeded--;
             }
             frameCounter++;
         }

@@ -7,4 +7,7 @@ public class ProcessControlBlock {
     public int priority;
     //Memory control
     public int diskAddress;
+    public int inputBufferSize;
+    public int outputBufferSize;
+    public int temporaryBufferSize;
 }

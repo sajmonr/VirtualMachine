@@ -11,6 +11,8 @@ public class SimpleMemory implements Memory {
     //Getters & Setters
     public int getCapacity(){ return _capacity; }
 
+
+    //Capacity is in bytes
     public SimpleMemory(int capacity) throws MemoryInitializationException{
         if(!NumberUtils.isPowerOfTwo(capacity))
             throw new MemoryInitializationException(String.format("Capacity must be a power of 2 (provided capacity: %d)", capacity));
@@ -19,7 +21,7 @@ public class SimpleMemory implements Memory {
     }
 
     @Override
-    public void write(int address, int[] data) throws MemoryOverflowException{
+    public void write(int address, byte[] data) throws MemoryOverflowException{
         if(data.length + address > _capacity)
             throw new MemoryOverflowException();
 

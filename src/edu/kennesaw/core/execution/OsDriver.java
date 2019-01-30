@@ -1,29 +1,56 @@
 package edu.kennesaw.core.execution;
 
+import edu.kennesaw.core.execution.scheduling.LongTermScheduler;
+import edu.kennesaw.core.execution.scheduling.policies.FifoPolicy;
+import edu.kennesaw.core.memory.*;
+import edu.kennesaw.core.processes.ProcessQueue;
 import edu.kennesaw.core.utils.NumberUtils;
+
+import java.io.FileNotFoundException;
 
 public class OsDriver {
 
     public enum ExecutionResult{OK, Fail}
 
-    public OsDriver(int cpus, int ramSize, int diskSize){
-        int address = 92;
-        int offsetSize = 4;
-        int page = address >> offsetSize;
-        int offset = address & ((1 << offsetSize) - 1);
+    //Fields
+    private final Loader _loader;
+    private final ProcessQueue _jobQueue;
+    private final ProcessQueue _readyQueue;
+    private final Memory _disk;
+    private final PagedMemory _ram;
 
-        System.out.println("Page: " + page);
-        System.out.println("Offset: " + offset);
+    private final LongTermScheduler _jobScheduler;
 
-        for(int i = 0; i <= 32; i++)
-            System.out.println(i + " : " + NumberUtils.isPowerOfTwo(i));
+    public OsDriver(int cpus, int ramSize, int diskSize) throws FileNotFoundException, MemoryInitializationException {
 
-        int x = 0xffffffff;
-        int y = 2;
-        System.out.println(x);
+        //Setup memories
+        _disk = new SimpleMemory(diskSize);
+        _ram = new PagedMemory(ramSize, 64);
+        //Setup queues
+        _jobQueue = new ProcessQueue(new FifoPolicy());
+        _readyQueue = new ProcessQueue(new FifoPolicy());
+
+        _loader = new Loader("C:\\Users\\asimo\\Desktop\\program-file.txt", _jobQueue);
+
+        _jobScheduler = new LongTermScheduler(_ram, _disk, _jobQueue, _readyQueue);
+
     }
 
     public ExecutionResult powerOn(){
+        //Load jobs to disk
+        try{
+            _loader.loadJobs(_disk);
+        }catch(Exception e){
+            System.out.println(e.getMessage());
+
+            return ExecutionResult.Fail;
+        }
+
+        boolean exit = false;
+
+        while(!exit){
+            _jobScheduler.schedule();
+        }
 
         return ExecutionResult.OK;
     }
