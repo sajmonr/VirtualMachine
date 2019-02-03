@@ -16,17 +16,19 @@ public class Loader {
     //Fields
     private final File _programFile;
     private final ProcessQueue _jobQueue;
+    private final Memory _disk;
 
-    public Loader(String programFilePath, ProcessQueue jobQueue) throws FileNotFoundException{
+    public Loader(String programFilePath, ProcessQueue jobQueue, Memory disk) throws FileNotFoundException{
         _programFile = new File(programFilePath);
 
         if(!_programFile.exists())
             throw new FileNotFoundException(String.format("File path: %s", programFilePath));
 
         _jobQueue = jobQueue;
+        _disk = disk;
     }
 
-    public void loadJobs(Memory memory) throws FileNotFoundException, IOException, MemoryOverflowException {
+    public void loadJobs() throws FileNotFoundException, IOException, MemoryOverflowException {
         BufferedReader reader = new BufferedReader(new FileReader(_programFile));
         int currentAddress = 0;
         String line;
@@ -41,7 +43,7 @@ public class Loader {
                     if(isInstruction(line)){
                         int instruction = parseInstruction(line);
 
-                        memory.write(currentAddress, BitUtils.getBytes(instruction));
+                        _disk.write(currentAddress, BitUtils.getBytes(instruction));
                         currentAddress += Config.WORD_SIZE;
                     }else if(isDataControlCard(line)){
                         int[] controlCard = parseControlCard(line);

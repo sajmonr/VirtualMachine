@@ -38,6 +38,9 @@ public class LongTermScheduler implements Scheduler {
 
             loadToPrimaryMemory(pageTable, job);
 
+            pcb.pageTable = pageTable;
+
+            _readyQueue.add(pcb);
         }catch(Exception e){
             System.out.println(e.getMessage());
         }
@@ -46,13 +49,14 @@ public class LongTermScheduler implements Scheduler {
     private void loadToPrimaryMemory(int[] pageTable, byte[] job) throws MemoryOverflowException {
         int size = job.length;
         int pageSize = _primaryMemory.getPageSize();
-        int wordsNeeded;
+        int bytesNeeded;
+        byte[] chunk;
 
         for(int i = 0; i < pageTable.length; i++){
-            byte[] chunk = new byte[pageSize];
-            wordsNeeded = size - (pageSize * i) >= pageSize ? pageSize : size - (pageSize * i);
+            chunk = new byte[pageSize];
+            bytesNeeded = size - (pageSize * i) >= pageSize ? pageSize : size - (pageSize * i);
 
-            System.arraycopy(job, pageSize * i, chunk, 0, wordsNeeded);
+            System.arraycopy(job, pageSize * i, chunk, 0, bytesNeeded);
 
             _primaryMemory.write(pageTable[i] * pageSize, chunk);
         }

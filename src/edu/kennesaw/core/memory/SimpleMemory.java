@@ -29,9 +29,9 @@ public class SimpleMemory implements Memory {
     }
 
     @Override
-    public byte[] read(int address, int length) throws MemoryOverflowException {
+    public byte[] read(int address, int length) throws IllegalMemoryAccessException {
         if(length + address > _capacity)
-            throw new MemoryOverflowException();
+            throw new IllegalMemoryAccessException(address);
 
         return Arrays.copyOfRange(_data, address, address + length);
     }

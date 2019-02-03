@@ -10,4 +10,13 @@ public class ProcessControlBlock {
     public int inputBufferSize;
     public int outputBufferSize;
     public int temporaryBufferSize;
+    public int[] pageTable;
+    //Job control
+    public int programCounter;
+    //Cpu properties
+    final public int[] registers = new int[16];
+    //Timing
+    public int burstTime;
+    public int arrivalTime;
+    public int timeQuantum;
 }
