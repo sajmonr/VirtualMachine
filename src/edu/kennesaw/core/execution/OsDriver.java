@@ -8,6 +8,7 @@ import edu.kennesaw.core.memory.*;
 import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
 import edu.kennesaw.core.processes.ProcessState;
+import edu.kennesaw.core.utils.Stopwatch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,8 @@ public class OsDriver {
     private final List<Thread> _cpuThreads;
 
     public OsDriver(int cpus, int ramSize, int diskSize) throws FileNotFoundException, MemoryInitializationException {
-
+        //Start the system stopwatch
+        Stopwatch.start();
         //Setup memories
         _disk = new SimpleMemory(diskSize);
         _ram = new PagedMemory(ramSize, 64);
