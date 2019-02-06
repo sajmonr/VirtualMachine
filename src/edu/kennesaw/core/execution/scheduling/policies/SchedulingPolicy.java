@@ -4,4 +4,5 @@ import edu.kennesaw.core.processes.ProcessControlBlock;
 
 public interface SchedulingPolicy {
     ProcessControlBlock select(Iterable<ProcessControlBlock> processes);
+    boolean isPreemptive();
 }

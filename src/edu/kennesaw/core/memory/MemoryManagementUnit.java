@@ -29,7 +29,11 @@ public class MemoryManagementUnit {
     public void write(int address, int data, int[] pageTable) throws MemoryOverflowException {
         int physicalAddress = getPhysicalAddress(address, pageTable);
 
+        _lock.lock();
+
         _memory.write(physicalAddress, BitUtils.getBytes(data));
+
+        _lock.unlock();
     }
     /**
      * Reads a word from specified address in a paged memory.
@@ -41,8 +45,10 @@ public class MemoryManagementUnit {
     public int read(int address, int[] pageTable) throws IllegalMemoryAccessException {
         int physicalAddress = getPhysicalAddress(address, pageTable);
 
+        //Lock the instance, read from memory, and unlock the instance for future use.
+        _lock.lock();
         byte[] bytes = _memory.read(physicalAddress, Config.WORD_SIZE);
-
+        _lock.unlock();
         return BitUtils.getInt(bytes);
     }
 

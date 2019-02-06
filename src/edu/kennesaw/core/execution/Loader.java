@@ -5,6 +5,8 @@ import edu.kennesaw.core.memory.Memory;
 import edu.kennesaw.core.memory.MemoryOverflowException;
 import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
+import edu.kennesaw.core.processes.ProcessState;
+import edu.kennesaw.core.processes.ProcessType;
 import edu.kennesaw.core.utils.BitUtils;
 import edu.kennesaw.core.utils.Config;
 
@@ -28,7 +30,7 @@ public class Loader {
         _disk = disk;
     }
 
-    public void loadJobs() throws FileNotFoundException, IOException, MemoryOverflowException {
+    public void loadJobs() throws IOException, MemoryOverflowException {
         BufferedReader reader = new BufferedReader(new FileReader(_programFile));
         int currentAddress = 0;
         String line;
@@ -65,6 +67,9 @@ public class Loader {
         pcb.jobId = jobControlCard[0];
         pcb.textSize = jobControlCard[1];
         pcb.priority = jobControlCard[2];
+
+        pcb.type = ProcessType.CPU;
+        pcb.state = ProcessState.NEW;
 
         return pcb;
     }

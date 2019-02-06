@@ -24,4 +24,5 @@ public class ProcessQueue {
     public void remove(ProcessControlBlock pcb){
         _pcbList.remove(pcb);
     }
+    public boolean isEmpty(){ return _pcbList.isEmpty(); }
 }

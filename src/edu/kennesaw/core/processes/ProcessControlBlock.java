@@ -1,10 +1,16 @@
 package edu.kennesaw.core.processes;
 
-public class ProcessControlBlock {
+import edu.kennesaw.core.utils.Config;
+
+import java.util.Observable;
+
+public class ProcessControlBlock{
     //Job identifiers
     public int jobId;
     public int textSize;
     public int priority;
+    public ProcessType type;
+    public ProcessState state;
     //Memory control
     public int diskAddress;
     public int inputBufferSize;
@@ -14,9 +20,8 @@ public class ProcessControlBlock {
     //Job control
     public int programCounter;
     //Cpu properties
-    final public int[] registers = new int[16];
+    public int[] registers = new int[Config.REGISTER_COUNT];
     //Timing
     public int burstTime;
     public int arrivalTime;
-    public int timeQuantum;
 }

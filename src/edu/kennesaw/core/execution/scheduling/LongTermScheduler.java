@@ -1,12 +1,12 @@
 package edu.kennesaw.core.execution.scheduling;
 
 import edu.kennesaw.core.execution.scheduling.policies.Scheduler;
-import edu.kennesaw.core.memory.AllocatableMemory;
 import edu.kennesaw.core.memory.Memory;
 import edu.kennesaw.core.memory.MemoryOverflowException;
 import edu.kennesaw.core.memory.PagedMemory;
 import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
+import edu.kennesaw.core.processes.ProcessState;
 import edu.kennesaw.core.utils.Config;
 
 public class LongTermScheduler implements Scheduler {
@@ -25,7 +25,10 @@ public class LongTermScheduler implements Scheduler {
     }
 
     @Override
-    public void schedule() {
+    public void schedule() throws FailedToScheduleException{
+        if(_jobQueue.isEmpty())
+            return;
+
         ProcessControlBlock pcb = _jobQueue.getSchedulingPolicy().select(_jobQueue.getProcesses());
 
         _jobQueue.remove(pcb);
@@ -39,6 +42,8 @@ public class LongTermScheduler implements Scheduler {
             loadToPrimaryMemory(pageTable, job);
 
             pcb.pageTable = pageTable;
+
+            pcb.state = ProcessState.READY;
 
             _readyQueue.add(pcb);
         }catch(Exception e){
