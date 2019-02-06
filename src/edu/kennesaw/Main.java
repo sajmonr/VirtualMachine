@@ -12,6 +12,8 @@ public class Main {
         OsDriver driver;
 
 //vcc test 2
+//version control test 1
+
         try{
             driver = new OsDriver(1, 1024 * Config.WORD_SIZE, 2048 * Config.WORD_SIZE);
             driver.powerOn();
