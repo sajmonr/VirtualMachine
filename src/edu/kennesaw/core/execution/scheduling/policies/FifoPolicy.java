@@ -8,9 +8,4 @@ public class FifoPolicy implements SchedulingPolicy{
     public ProcessControlBlock select(Iterable<ProcessControlBlock> processes) {
         return processes.iterator().next();
     }
-
-    @Override
-    public boolean isPreemptive() {
-        return false;
-    }
 }

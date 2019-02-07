@@ -9,6 +9,7 @@ import edu.kennesaw.core.processes.ProcessState;
 import edu.kennesaw.core.processes.ProcessType;
 import edu.kennesaw.core.utils.BitUtils;
 import edu.kennesaw.core.utils.Config;
+import edu.kennesaw.metrics.Metrics;
 
 import java.io.*;
 
@@ -56,6 +57,8 @@ public class Loader {
                     }
                 }
                 _jobQueue.add(pcb);
+                //Metrics log
+                Metrics.job().register(pcb.jobId);
             }
         }
 

@@ -3,7 +3,7 @@ package edu.kennesaw.core.utils;
 public final class Stopwatch {
     //Singleton fields
     private static volatile  Stopwatch _instance;
-    private static Object _syncLock = new Object();
+    private final static Object _syncLock = new Object();
     //Instance fields
     private final long _startTime;
 

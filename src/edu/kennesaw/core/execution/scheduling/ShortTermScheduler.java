@@ -4,9 +4,11 @@ import edu.kennesaw.core.execution.CentralProcessingUnit.Cpu;
 import edu.kennesaw.core.execution.CentralProcessingUnit.InvalidRegisterAccessException;
 import edu.kennesaw.core.execution.Dispatcher;
 import edu.kennesaw.core.execution.scheduling.policies.Scheduler;
+import edu.kennesaw.core.memory.AllocatableMemory;
 import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
 import edu.kennesaw.core.processes.ProcessState;
+import edu.kennesaw.metrics.Metrics;
 
 public class ShortTermScheduler implements Scheduler {
 
@@ -14,19 +16,20 @@ public class ShortTermScheduler implements Scheduler {
     private final ProcessQueue _readyQueue;
     private final Cpu[] _cpus;
     private final Dispatcher _dispatcher;
+    private final AllocatableMemory _ram;
 
-    public ShortTermScheduler(ProcessQueue readyQueue, Cpu[] cpus){
+    public ShortTermScheduler(ProcessQueue readyQueue, Cpu[] cpus, AllocatableMemory ram){
         _dispatcher = new Dispatcher();
         _readyQueue = readyQueue;
         _cpus = cpus;
+        _ram = ram;
     }
 
     @Override
     public void schedule() throws FailedToScheduleException {
-        if(_readyQueue.isEmpty())
-            return;
+        if(_readyQueue.isEmpty()) return;
 
-        Cpu cpu = getAvailableCpu(_readyQueue.getSchedulingPolicy().isPreemptive());
+        Cpu cpu = getAvailableCpu();
 
         if(cpu != null){
             ProcessControlBlock oldPcb;
@@ -39,28 +42,38 @@ public class ShortTermScheduler implements Scheduler {
                 throw new FailedToScheduleException(ira);
             }
 
-
-            if(oldPcb != null && oldPcb.state != ProcessState.TERMINATED){
-                oldPcb.state = ProcessState.READY;
-                _readyQueue.add(oldPcb);
+            if(oldPcb != null){
+                if(oldPcb.state == ProcessState.TERMINATED){
+                    destroyPcb(oldPcb);
+                }else{
+                    oldPcb.state = ProcessState.READY;
+                    _readyQueue.add(oldPcb);
+                }
             }
 
+            //Metrics log
+            Metrics.job().startedExecution(newPcb.jobId);
             newPcb.state = ProcessState.RUNNING;
         }
     }
 
-    private Cpu getAvailableCpu(boolean preemptive){
+    public void cleanUp(){
+        for(int i = 0; i < _cpus.length; i++)
+            destroyPcb(_cpus[i].getProcess());
+    }
+
+    private void destroyPcb(ProcessControlBlock pcb){
+        Metrics.job().endedExecution(pcb.jobId);
+        for(int page : pcb.pageTable)
+            _ram.deallocate(page);
+        Metrics.job().destroyed(pcb.jobId);
+    }
+
+    private Cpu getAvailableCpu(){
         //First try to find cpu that is not busy
         for(Cpu cpu : _cpus){
-            if(!cpu.isBusy())
+            if(cpu.isIdle())
                 return cpu;
-        }
-        //If all cpus are busy & preemtive is set then terminate a cpu
-        if(preemptive){
-            for(Cpu cpu : _cpus){
-                if(cpu.pwait())
-                    return cpu;
-            }
         }
 
         return null;

@@ -21,6 +21,7 @@ public class ProcessQueue {
     public void add(ProcessControlBlock pcb){
         _pcbList.add(pcb);
     }
+    public int count() { return _pcbList.size(); }
     public void remove(ProcessControlBlock pcb){
         _pcbList.remove(pcb);
     }

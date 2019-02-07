@@ -8,6 +8,7 @@ import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
 import edu.kennesaw.core.processes.ProcessState;
 import edu.kennesaw.core.utils.Config;
+import edu.kennesaw.metrics.Metrics;
 
 public class LongTermScheduler implements Scheduler {
 
@@ -16,38 +17,42 @@ public class LongTermScheduler implements Scheduler {
     private final Memory _secondaryMemory;
     private final ProcessQueue _jobQueue;
     private final ProcessQueue _readyQueue;
+    private final int _maxParallelism;
 
-    public LongTermScheduler(PagedMemory primaryMemory, Memory secondaryMemory, ProcessQueue jobQueue, ProcessQueue readyQueue) {
+    public LongTermScheduler(PagedMemory primaryMemory, Memory secondaryMemory, ProcessQueue jobQueue, ProcessQueue readyQueue, int maxParallelism) {
         _primaryMemory = primaryMemory;
         _secondaryMemory = secondaryMemory;
         _jobQueue = jobQueue;
         _readyQueue = readyQueue;
+        _maxParallelism = maxParallelism;
     }
 
     @Override
     public void schedule() throws FailedToScheduleException{
-        if(_jobQueue.isEmpty())
-            return;
+        while(!_jobQueue.isEmpty() && _readyQueue.count() <= _maxParallelism){
+            ProcessControlBlock pcb = _jobQueue.getSchedulingPolicy().select(_jobQueue.getProcesses());
 
-        ProcessControlBlock pcb = _jobQueue.getSchedulingPolicy().select(_jobQueue.getProcesses());
+            _jobQueue.remove(pcb);
 
-        _jobQueue.remove(pcb);
+            int processSize = (pcb.textSize + pcb.inputBufferSize + pcb.outputBufferSize + pcb.temporaryBufferSize) * Config.WORD_SIZE;
 
-        int processSize = (pcb.textSize + pcb.inputBufferSize + pcb.outputBufferSize + pcb.temporaryBufferSize) * Config.WORD_SIZE;
+            try{
+                int[] pageTable = _primaryMemory.allocate(processSize);
+                byte[] job = _secondaryMemory.read(pcb.diskAddress, processSize);
 
-        try{
-            int[] pageTable = _primaryMemory.allocate(processSize);
-            byte[] job = _secondaryMemory.read(pcb.diskAddress, processSize);
+                loadToPrimaryMemory(pageTable, job);
 
-            loadToPrimaryMemory(pageTable, job);
+                pcb.pageTable = pageTable;
 
-            pcb.pageTable = pageTable;
+                pcb.state = ProcessState.READY;
 
-            pcb.state = ProcessState.READY;
-
-            _readyQueue.add(pcb);
-        }catch(Exception e){
-            System.out.println(e.getMessage());
+                _readyQueue.add(pcb);
+                //Metrics log
+                Metrics.job().created(pcb.jobId);
+            }catch(Exception e){
+                _jobQueue.add(pcb);
+                System.out.println(e.getMessage());
+            }
         }
     }
 

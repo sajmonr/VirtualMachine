@@ -62,6 +62,7 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory {
                 _pageFile[frameCounter].dirty = true;
                 framesAllocated[framesAllocated.length - framesNeeded] = frameCounter;
                 framesNeeded--;
+                _framesAvailable--;
             }
             frameCounter++;
         }
@@ -82,8 +83,10 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory {
 
     @Override
     public void deallocate(int frame) {
-        if(frame < _pageFile.length)
+        if(frame < _pageFile.length) {
             _pageFile[frame].dirty = false;
+            _framesAvailable++;
+        }
     }
 
     private void initializePageFile(){

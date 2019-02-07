@@ -5,10 +5,9 @@ import edu.kennesaw.core.execution.scheduling.LongTermScheduler;
 import edu.kennesaw.core.execution.scheduling.ShortTermScheduler;
 import edu.kennesaw.core.execution.scheduling.policies.FifoPolicy;
 import edu.kennesaw.core.memory.*;
-import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessQueue;
-import edu.kennesaw.core.processes.ProcessState;
 import edu.kennesaw.core.utils.Stopwatch;
+import edu.kennesaw.metrics.Metrics;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,58 +40,69 @@ public class OsDriver {
         _readyQueue = new ProcessQueue(new FifoPolicy());
 
         //Change path to reflect your environment.
-        String programFilePath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file.txt";
-        _loader = new Loader(programFilePath, _jobQueue, _disk);
+        String programFileSinglePath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file-single.txt";
+        String programFileMultiPath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file-multi.txt";
+        _loader = new Loader(programFileMultiPath, _jobQueue, _disk);
 
         //Setup CPUs
         _cpus = new Cpu[cpus];
         _cpuThreads = new ArrayList<>();
         spawnCpus();
 
-        _jobScheduler = new LongTermScheduler(_ram, _disk, _jobQueue, _readyQueue);
-        _cpuScheduler = new ShortTermScheduler(_readyQueue, _cpus);
+        _jobScheduler = new LongTermScheduler(_ram, _disk, _jobQueue, _readyQueue, cpus);
+        _cpuScheduler = new ShortTermScheduler(_readyQueue, _cpus, _ram);
     }
 
+    /**
+     * Main method that powers up the virtual OS.
+     * @return OK if execution succeeds or FAIL otherwise.
+     */
     public ExecutionResult powerOn(){
+        System.out.println("Going for system startup.");
         //Load jobs to disk or fail
         try{
             _loader.loadJobs();
         }catch(Exception e){
-            System.out.println("System failed to start.");
+            System.out.println("System failed to start. Terminating.");
             System.out.println(e.getMessage());
 
             return ExecutionResult.FAIL;
         }
-        //Power on the CPUs
+        //Power on the CPUs and optionally set the delay (recommended).
+        setCpuExecutionDelay(50);
         startCpus();
 
         try{
             //This is the main scheduling loop of the driver.
             do{
-                if(!_jobQueue.isEmpty() && _readyQueue.isEmpty())
-                    _jobScheduler.schedule();
-
+                _jobScheduler.schedule();
                 _cpuScheduler.schedule();
 
-                //Sleep the thread to stabilize the system.
-                //Maybe there is a better way, but for now it is OK.
-                Thread.sleep(10);
                 //The loop will terminate if all CPUs finish their jobs
                 //and there are no jobs waiting to be executed.
-            }while(cpusBusy() || !_jobQueue.isEmpty() || !_readyQueue.isEmpty());
+            }while(!cpusDone() || !_jobQueue.isEmpty() || !_readyQueue.isEmpty());
         }catch(Exception e){
             System.out.println(e.getMessage());
             return ExecutionResult.FAIL;
+        }finally {
+            _cpuScheduler.cleanUp();
         }
 
         //Try to gracefully terminate CPUs
         try {
-            System.out.println("Going for CPU shutdown.");
             stopCpus();
         }catch(Exception e){
             System.out.println("CPU termination failed.");
             return ExecutionResult.FAIL;
         }
+
+        System.out.println("Going for system shutdown.");
+        long runtime = Stopwatch.tick();
+        System.out.println(String.format("Total system runtime: %fs (%dms)", runtime / 1000.0, runtime));
+
+        //Print metrics
+        Metrics.job().printStats();
+
         return ExecutionResult.OK;
     }
 
@@ -101,6 +111,7 @@ public class OsDriver {
             _cpus[i] = new Cpu(i, _ramMmu);
     }
     private void stopCpus() throws Exception{
+        System.out.println("Going for CPU shutdown.");
         for(int i = 0; i < _cpus.length; i++){
             _cpus[i].exit();
             //Wait for all the CPU threads to terminate.
@@ -108,17 +119,29 @@ public class OsDriver {
         }
         //Release all references to the CPU threads.
         _cpuThreads.clear();
+        System.out.println("All CPUs terminated successfully.");
     }
     private void startCpus(){
-        for(Cpu cpu : _cpus){
-            Thread t = new Thread(cpu);
+        System.out.println("Going for CPU power on.");
+
+        for(int i = 0; i < _cpus.length; i++){
+            Thread t = new Thread(_cpus[i]);
             t.start();
             _cpuThreads.add(t);
+            System.out.println(String.format("CPU#%d powered on.", i));
         }
+        System.out.println(String.format("All CPUs powered on successfully. Total CPUs: %d", _cpus.length));
     }
-    private boolean cpusBusy(){
+
+    private void setCpuExecutionDelay(int delay){
+        System.out.println(String.format("Setting execution delay on all CPUs (%dms).", delay));
+        for(Cpu cpu : _cpus)
+            cpu.setExecutionDelay(delay);
+    }
+
+    private boolean cpusDone(){
         for(Cpu cpu : _cpus){
-            if(cpu.isBusy())
+            if(cpu.isIdle())
                 return true;
         }
         return false;
