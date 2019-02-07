@@ -97,7 +97,7 @@ public class OsDriver {
 
     private void spawnCpus(){
         for(int i = 0; i < _cpus.length; i++)
-            _cpus[i] = new Cpu(i, _ram);
+            _cpus[i] = new Cpu(i, _ramMmu);
     }
     private void stopCpus() throws Exception{
         for(int i = 0; i < _cpus.length; i++){

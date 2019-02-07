@@ -1,9 +1,11 @@
 package edu.kennesaw.core.execution.CentralProcessingUnit;
 
+import edu.kennesaw.core.memory.MemoryManagementUnit;
 import edu.kennesaw.core.memory.PagedMemory;
 import edu.kennesaw.core.processes.ProcessControlBlock;
 import edu.kennesaw.core.processes.ProcessState;
 import edu.kennesaw.core.utils.Config;
+import edu.kennesaw.core.utils.Instruction;
 
 public class Cpu implements Runnable{
     //Fields
@@ -13,7 +15,7 @@ public class Cpu implements Runnable{
     private ProcessControlBlock _process;
     private int[] _registers;
     private int _programCounter;
-    private final PagedMemory _ram;
+    private final MemoryManagementUnit _ram;
 
     //Getters & setters
     public int getId(){ return _id; }
@@ -23,7 +25,7 @@ public class Cpu implements Runnable{
     public int getProgramCounter() { return _programCounter; }
     public void setProgramCounter(int value) { _programCounter = value; }
 
-    public Cpu(int id, PagedMemory ram){
+    public Cpu(int id, MemoryManagementUnit ram){
         _id = id;
         _registers = new int[Config.REGISTER_COUNT];
         _ram = ram;
@@ -80,6 +82,7 @@ public class Cpu implements Runnable{
         }catch(Exception e){
 
         }
+
         //fetch();
         //decode();
         //execute();

@@ -11,7 +11,7 @@ public class Main {
     public static void main(String[] args) {
         OsDriver driver;
         int x;
-
+        int y;
         try{
             driver = new OsDriver(1, 1024 * Config.WORD_SIZE, 2048 * Config.WORD_SIZE);
             driver.powerOn();
