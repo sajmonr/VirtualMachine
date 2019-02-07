@@ -39,7 +39,7 @@ public class OsDriver {
         _jobQueue = new ProcessQueue(new FifoPolicy());
         _readyQueue = new ProcessQueue(new FifoPolicy());
 
-        //Change path to reflect your environment.
+        //Change file depending on usage.
         String programFileSinglePath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file-single.txt";
         String programFileMultiPath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file-multi.txt";
         _loader = new Loader(programFileMultiPath, _jobQueue, _disk);
