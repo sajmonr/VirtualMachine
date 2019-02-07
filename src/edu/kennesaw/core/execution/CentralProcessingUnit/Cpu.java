@@ -82,7 +82,6 @@ public class Cpu implements Runnable{
         }catch(Exception e){
 
         }
-
         //fetch();
         //decode();
         //execute();

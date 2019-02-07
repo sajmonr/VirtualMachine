@@ -41,7 +41,8 @@ public class OsDriver {
         _readyQueue = new ProcessQueue(new FifoPolicy());
 
         //Change path to reflect your environment.
-        _loader = new Loader("C:\\Users\\asimo\\Desktop\\program-file.txt", _jobQueue, _disk);
+        String programFilePath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file.txt";
+        _loader = new Loader(programFilePath, _jobQueue, _disk);
 
         //Setup CPUs
         _cpus = new Cpu[cpus];
