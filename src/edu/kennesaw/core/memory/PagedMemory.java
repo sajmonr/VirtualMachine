@@ -5,7 +5,7 @@ import edu.kennesaw.core.utils.NumberUtils;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class PagedMemory extends SimpleMemory implements AllocatableMemory {
+public class PagedMemory extends SimpleMemory implements AllocatableMemory, CapacityMemory {
     //Fields
     private final Lock _lock;
     private final Frame[] _pageFile;
@@ -33,6 +33,13 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory {
         initializePageFile();
     }
 
+    /**
+     * Retrieves how much memory is used in bytes.
+     * @return Bytes used.
+     */
+    public int getUsedCapacity(){
+        return getCapacity() - _pageSize * _framesAvailable;
+    }
     /**
      * Allocates memory in the memory.
      * @param size Size in bytes to allocate.
