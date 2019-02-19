@@ -42,7 +42,7 @@ public class OsDriver {
         //Change file depending on usage.
         String programFileSinglePath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file-single.txt";
         String programFileMultiPath = System.getProperty("user.dir") + "/src/edu/kennesaw/program-file-multi.txt";
-        _loader = new Loader(programFileMultiPath, _jobQueue, _disk);
+        _loader = new Loader(programFileSinglePath, _jobQueue, _disk);
 
         //Setup CPUs
         _cpus = new Cpu[cpus];
