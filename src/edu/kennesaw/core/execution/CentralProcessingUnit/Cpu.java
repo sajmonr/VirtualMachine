@@ -106,18 +106,9 @@ public class Cpu implements Runnable{
         int registerTwo = 0;
         int data = 0;
 
+
         //this switch needs to cover all type enums
         //see Instruction class for enum values and project file for functionality.
-        switch (type){
-            case IO:
-                registerOne = BitUtils.getBits(instruction, 4, 20);
-                registerTwo = BitUtils.getBits(instruction, 4, 16);
-                data = BitUtils.getBits(instruction, 16);
-                break;
-        }
-        //this switch needs to cover all opCode enums
-        //see Instruction class for enum values and project file for functionality.
-        //possibly needs to change for caching.
         switch (type){
             case IO:
                 registerOne = BitUtils.getBits(instruction, 4, 20);
@@ -137,10 +128,29 @@ public class Cpu implements Runnable{
                 data = BitUtils.getBits(instruction, 16);
                 break;
 
+
             case JUMP:
                 data = BitUtils.getBits(instruction, 24);
                 break;
         }
+
+
+        //this switch needs to cover all opCode enums
+        //see Instruction class for enum values and project file for functionality.
+        //possibly needs to change for caching.
+        switch(opCode){
+            case RD:
+                _registers[registerOne] = _ram.read(data, _process.pageTable);
+
+            case JMP:
+
+
+            case BEQ:
+
+
+        }
+
+    }
 
     //Start register control
     public int getRegisterValue(int register) throws InvalidRegisterAccessException{
