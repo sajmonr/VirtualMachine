@@ -26,7 +26,8 @@ public class OsDriver {
     private final LongTermScheduler _jobScheduler;
     private final ShortTermScheduler _cpuScheduler;
     private final Cpu[] _cpus;
-    private final List<Thread> _cpuThreads;
+    //private final List<Thread> _cpuThreads;
+    private final Thread[] _cpuThreads;
 
     public OsDriver(int cpus, int ramSize, int diskSize) throws FileNotFoundException, MemoryInitializationException {
         //Start the system stopwatch
@@ -46,7 +47,8 @@ public class OsDriver {
 
         //Setup CPUs
         _cpus = new Cpu[cpus];
-        _cpuThreads = new ArrayList<>();
+        //_cpuThreads = new ArrayList<>();
+        _cpuThreads = new Thread[cpus];
         spawnCpus();
 
         _jobScheduler = new LongTermScheduler(_ram, _disk, _jobQueue, _readyQueue, cpus);
@@ -115,10 +117,10 @@ public class OsDriver {
         for(int i = 0; i < _cpus.length; i++){
             _cpus[i].exit();
             //Wait for all the CPU threads to terminate.
-            _cpuThreads.get(i).join();
+            _cpuThreads[i].join();
+            //Release all references to CPU threads.
+            _cpuThreads[i] = null;
         }
-        //Release all references to the CPU threads.
-        _cpuThreads.clear();
         System.out.println("All CPUs terminated successfully.");
     }
     private void startCpus(){
@@ -127,7 +129,7 @@ public class OsDriver {
         for(int i = 0; i < _cpus.length; i++){
             Thread t = new Thread(_cpus[i]);
             t.start();
-            _cpuThreads.add(t);
+            _cpuThreads[i] = t;
             System.out.println(String.format("CPU#%d powered on.", i));
         }
         System.out.println(String.format("All CPUs powered on successfully. Total CPUs: %d", _cpus.length));

@@ -30,6 +30,7 @@ public class LongTermScheduler implements Scheduler {
     @Override
     public void schedule() throws FailedToScheduleException{
         while(!_jobQueue.isEmpty() && _readyQueue.count() <= _maxParallelism){
+
             ProcessControlBlock pcb = _jobQueue.getSchedulingPolicy().select(_jobQueue.getProcesses());
 
             _jobQueue.remove(pcb);
@@ -38,6 +39,11 @@ public class LongTermScheduler implements Scheduler {
 
             try{
                 int[] pageTable = _primaryMemory.allocate(processSize);
+
+                //Terminate this scheduling session if no space has been allocated
+                if(pageTable == null)
+                    return;
+
                 byte[] job = _secondaryMemory.read(pcb.diskAddress, processSize);
 
                 loadToPrimaryMemory(pageTable, job);
@@ -51,7 +57,7 @@ public class LongTermScheduler implements Scheduler {
                 Metrics.job().created(pcb.jobId);
             }catch(Exception e){
                 _jobQueue.add(pcb);
-                System.out.println(e.getMessage());
+                throw new FailedToScheduleException(e);
             }
         }
     }

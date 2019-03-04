@@ -7,15 +7,18 @@ import javax.swing.plaf.basic.BasicMenuItemUI;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class MemoryManagementUnit {
+public class MemoryManagementUnit{
 
     //Fields
     private final PagedMemory _memory;
     private final int _offsetBits;
-    private final Lock _lock;
+    private volatile Object _syncLock = new Object();
+
+    //locking variables
+    private volatile Object _lock = null;
+    //end locking variables
 
     public MemoryManagementUnit(PagedMemory memory){
-        _lock = new ReentrantLock();
         _memory = memory;
         _offsetBits = calculateOffsetBits();
     }
@@ -28,12 +31,9 @@ public class MemoryManagementUnit {
      */
     public void write(int address, int data, int[] pageTable) throws MemoryOverflowException {
         int physicalAddress = getPhysicalAddress(address, pageTable);
-
-        _lock.lock();
-
-        _memory.write(physicalAddress, BitUtils.getBytes(data));
-
-        _lock.unlock();
+        synchronized (_syncLock) {
+            _memory.write(physicalAddress, BitUtils.getBytes(data));
+        }
     }
     /**
      * Reads a word from specified address in a paged memory.
@@ -44,12 +44,16 @@ public class MemoryManagementUnit {
      */
     public int read(int address, int[] pageTable) throws IllegalMemoryAccessException {
         int physicalAddress = getPhysicalAddress(address, pageTable);
-
+        byte[] bytes;
         //Lock the instance, read from memory, and unlock the instance for future use.
-        _lock.lock();
-        byte[] bytes = _memory.read(physicalAddress, Config.WORD_SIZE);
-        _lock.unlock();
+        synchronized (_syncLock) {
+            bytes = _memory.read(physicalAddress, Config.WORD_SIZE);
+        }
         return BitUtils.getInt(bytes);
+    }
+
+    public void dump(int[] pageTable){
+
     }
 
     private int calculateOffsetBits(){

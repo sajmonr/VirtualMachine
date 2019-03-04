@@ -59,7 +59,6 @@ public final class MemoryMetrics {
             }
         }
     }
-
     private final class MemoryInfo{
         //Usage stats are in bytes
         public int maxUsage;

@@ -2,12 +2,9 @@ package edu.kennesaw.core.memory;
 
 import edu.kennesaw.core.utils.NumberUtils;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class PagedMemory extends SimpleMemory implements AllocatableMemory, CapacityMemory {
     //Fields
-    private final Lock _lock;
+    private final Object _syncLock = new Object();
     private final Frame[] _pageFile;
     private int _framesAvailable;
     private int _pageSize;
@@ -25,7 +22,6 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory, Capa
         if(!NumberUtils.isPowerOfTwo(frameSize))
             throw new MemoryInitializationException(String.format("Frame size must be a power of 2 (provided size: %d).", frameSize));
 
-        _lock = new ReentrantLock();
         _pageSize = frameSize;
         _framesAvailable = capacity / frameSize;
         _pageFile = new Frame[_framesAvailable];
@@ -33,13 +29,6 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory, Capa
         initializePageFile();
     }
 
-    /**
-     * Retrieves how much memory is used in bytes.
-     * @return Bytes used.
-     */
-    public int getUsedCapacity(){
-        return getCapacity() - _pageSize * _framesAvailable;
-    }
     /**
      * Allocates memory in the memory.
      * @param size Size in bytes to allocate.
@@ -55,27 +44,29 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory, Capa
             framesNeeded++;
 
         if(framesNeeded > _framesAvailable)
-            throw new MemoryAllocationException(size);
+            return null;
+        //throw new MemoryAllocationException(size);
 
         int[] framesAllocated = new int[framesNeeded];
+
+        _framesAvailable -= framesNeeded;
 
         int frameCounter = 0;
         //Lock the memory for access so that multiple threads do not
         //try to allocate the same memory.
-        _lock.lock();
 
-        while(framesNeeded > 0){
-            if (!_pageFile[frameCounter].dirty) {
-                _pageFile[frameCounter].dirty = true;
-                framesAllocated[framesAllocated.length - framesNeeded] = frameCounter;
-                framesNeeded--;
-                _framesAvailable--;
+        synchronized (_syncLock) {
+            while (framesNeeded > 0) {
+                if (!_pageFile[frameCounter].dirty) {
+                    _pageFile[frameCounter].dirty = true;
+                    framesAllocated[framesAllocated.length - framesNeeded] = frameCounter;
+                    framesNeeded--;
+                }
+                frameCounter++;
             }
-            frameCounter++;
-        }
 
-        //Unlock after page table info is collected.
-        _lock.unlock();
+            //Unlock after page table info is collected.
+        }
 
         return framesAllocated;
     }
@@ -84,16 +75,15 @@ public class PagedMemory extends SimpleMemory implements AllocatableMemory, Capa
      * Retrieves how much memory is used in bytes.
      * @return Bytes used.
      */
-    public int usedCapactiy(){
+    public int getUsedCapacity(){
         return getCapacity() - _pageSize * _framesAvailable;
     }
 
     @Override
     public void deallocate(int frame) {
-        if(frame < _pageFile.length) {
+        if(frame < _pageFile.length)
             _pageFile[frame].dirty = false;
-            _framesAvailable++;
-        }
+        _framesAvailable++;
     }
 
     private void initializePageFile(){

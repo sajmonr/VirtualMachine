@@ -2,8 +2,6 @@ package edu.kennesaw.core.processes;
 
 import edu.kennesaw.core.utils.Config;
 
-import java.util.Observable;
-
 public class ProcessControlBlock{
     //Job identifiers
     public int jobId;
@@ -21,7 +19,4 @@ public class ProcessControlBlock{
     public int programCounter;
     //Cpu properties
     public int[] registers = new int[Config.REGISTER_COUNT];
-    //Timing
-    public int burstTime;
-    public int arrivalTime;
 }
