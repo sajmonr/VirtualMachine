@@ -109,8 +109,10 @@ public class OsDriver {
     }
 
     private void spawnCpus(){
-        for(int i = 0; i < _cpus.length; i++)
+        for(int i = 0; i < _cpus.length; i++) {
             _cpus[i] = new Cpu(i, _ramMmu);
+            Metrics.cpu().register(i);
+        }
     }
     private void stopCpus() throws Exception{
         System.out.println("Going for CPU shutdown.");
