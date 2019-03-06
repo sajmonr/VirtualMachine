@@ -141,11 +141,72 @@ public class Cpu implements Runnable{
         switch(opCode){
             case RD:
                 _registers[registerOne] = _ram.read(data, _process.pageTable);
+                break;
+
+
+            case SLT:
+                if(registerOne<registerTwo){
+                    data=1;
+                }
+                else
+                    data =0;
+
+                break;
+
+            case SLTI:
+                if(registerOne<data){
+                    registerTwo=1;
+                }
+                else
+                    registerTwo=0;
+
+                break;
+
+            case HLT:
+                return;
+
+            case NOP:
+                break;
 
             case JMP:
-
+                _programCounter = data;
+                break;
 
             case BEQ:
+                if(registerOne==registerTwo){
+                    _programCounter = data;
+                }
+                break;
+
+            case BNE:
+                if(registerOne!=registerTwo){
+                    _programCounter = data;
+                }
+                break;
+
+            case BEZ:
+                if(registerOne==0){
+                    _programCounter = data;
+                }
+                break;
+
+            case BNZ:
+                if(registerOne!=0){
+                    _programCounter = data;
+                }
+                break;
+
+            case BGZ:
+                if(registerOne>0){
+                    _programCounter = data;
+                }
+                break;
+
+            case BLZ:
+                if(registerOne<0){
+                    _programCounter = data;
+                }
+                break;
 
 
         }
