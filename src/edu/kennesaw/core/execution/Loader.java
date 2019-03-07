@@ -58,7 +58,7 @@ public class Loader {
                 }
                 _jobQueue.add(pcb);
                 //Metrics log
-                Metrics.job().register(pcb.jobId);
+                Metrics.job().register(pcb.jobId, pcb.priority);
             }
         }
 

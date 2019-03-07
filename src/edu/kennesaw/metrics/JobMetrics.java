@@ -7,38 +7,49 @@ import java.util.Map;
 
 public final class JobMetrics {
     //Fields
-    private final Map<Integer, JobInfo> _monitoredJobs;
+    private volatile Map<Integer, JobInfo> _monitoredJobs;
 
     public JobMetrics(){
         _monitoredJobs = new HashMap<>();
     }
 
-    public void register(int pid){
-        if(!isMonitored(pid))
-            _monitoredJobs.put(pid, new JobInfo());
+    public void register(int pid, int priority){
+        if(!isRegistered(pid)){
+            JobInfo jobInfo = new JobInfo();
+
+            jobInfo.priority = priority;
+
+            _monitoredJobs.put(pid, jobInfo);
+        }
+
     }
 
     public void startedExecution(int pid){
-        if(isMonitored(pid))
+        if(isRegistered(pid))
             getInfo(pid).beganExecution = Stopwatch.tick();
     }
 
     public void endedExecution(int pid){
-        if(isMonitored(pid))
+        if(isRegistered(pid))
             getInfo(pid).endedExecution = Stopwatch.tick();
     }
 
     public void created(int pid){
-        if(isMonitored(pid))
+        if(isRegistered(pid))
             getInfo(pid).created = Stopwatch.tick();
     }
 
     public void destroyed(int pid){
-        if(isMonitored(pid))
+        if(isRegistered(pid))
             getInfo(pid).destroyed = Stopwatch.tick();
     }
 
-    public boolean isMonitored(int pid){
+    public void ioMade(int pid){
+        if(isRegistered(pid))
+            getInfo(pid).ioOperations++;
+    }
+
+    public boolean isRegistered(int pid){
         return _monitoredJobs.containsKey(pid);
     }
 
@@ -71,13 +82,14 @@ public final class JobMetrics {
         System.out.println("------------Job metrics-------------");
 
         for(Map.Entry<Integer, JobInfo> job : _monitoredJobs.entrySet()){
-            System.out.println(String.format("Job - %d", job.getKey()));
+            System.out.println(String.format(">>>Job - %d (priority: %d)", job.getKey(), job.getValue().priority));
             System.out.println(String.format("Creation time: %dms", job.getValue().created));
             System.out.println(String.format("Destruction time: %dms", job.getValue().destroyed));
             System.out.println(String.format("Begin execution time: %dms", job.getValue().beganExecution));
             System.out.println(String.format("End execution time: %dms", job.getValue().endedExecution));
             System.out.println(String.format("Run time: %dms", job.getValue().getRunTime()));
             System.out.println(String.format("Wait time: %dms", job.getValue().getWaitTime()));
+            System.out.println(String.format("IO operations made: %d", job.getValue().ioOperations));
         }
 
         System.out.println("All jobs");
@@ -88,11 +100,13 @@ public final class JobMetrics {
     }
 
     //A structure to store info
-    private class JobInfo{
+    private final class JobInfo{
+        public int priority;
         public long created;
         public long destroyed;
         public long beganExecution;
         public long endedExecution;
+        public int ioOperations;
 
         public long getWaitTime(){
             return beganExecution - created;

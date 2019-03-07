@@ -41,8 +41,10 @@ public class LongTermScheduler implements Scheduler {
                 int[] pageTable = _primaryMemory.allocate(processSize);
 
                 //Terminate this scheduling session if no space has been allocated
-                if(pageTable == null)
+                if(pageTable == null) {
+                    _jobQueue.add(pcb);
                     return;
+                }
 
                 byte[] job = _secondaryMemory.read(pcb.diskAddress, processSize);
 

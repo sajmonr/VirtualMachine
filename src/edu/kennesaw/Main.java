@@ -9,7 +9,7 @@ public class Main {
         OsDriver driver;
 
         try{
-            driver = new OsDriver(1, 1024 * Config.WORD_SIZE, 2048 * Config.WORD_SIZE);
+            driver = new OsDriver(4, 1024 * Config.WORD_SIZE, 2048 * Config.WORD_SIZE);
             driver.powerOn();
         }catch(Exception e){
             System.out.println(e.getMessage());

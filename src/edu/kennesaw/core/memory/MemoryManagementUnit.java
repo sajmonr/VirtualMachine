@@ -52,8 +52,8 @@ public class MemoryManagementUnit{
         return BitUtils.getInt(bytes);
     }
 
-    public void dump(int[] pageTable){
-
+    public int getPageSize(){
+        return _memory.getPageSize();
     }
 
     private int calculateOffsetBits(){
